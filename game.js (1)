@@ -1,0 +1,502 @@
+document.addEventListener("DOMContentLoaded", () => {
+
+    /* =========================
+       ELEMENTOS
+    ========================== */
+
+    const menuButton = document.getElementById("menuButton");
+    const mobileMenu = document.getElementById("mobileMenu");
+
+    const gallerySlides = document.querySelectorAll(".gallery-slide");
+    const galleryDots = document.querySelectorAll(".gallery-dot");
+
+    const prevButton = document.getElementById("galleryPrev");
+    const nextButton = document.getElementById("galleryNext");
+
+    const currentSlide = document.getElementById("currentSlide");
+
+    const year = document.getElementById("year");
+
+
+    /* =========================
+       ANO DO FOOTER
+    ========================== */
+
+    if (year) {
+        year.textContent = new Date().getFullYear();
+    }
+
+
+    /* =========================
+       MENU
+    ========================== */
+
+    function openMenu() {
+
+        mobileMenu.classList.add("active");
+        menuButton.classList.add("active");
+
+        menuButton.setAttribute("aria-expanded", "true");
+        menuButton.setAttribute("aria-label", "Fechar menu");
+
+        document.body.style.overflow = "hidden";
+    }
+
+
+    function closeMenu() {
+
+        mobileMenu.classList.remove("active");
+        menuButton.classList.remove("active");
+
+        menuButton.setAttribute("aria-expanded", "false");
+        menuButton.setAttribute("aria-label", "Abrir menu");
+
+        document.body.style.overflow = "";
+    }
+
+
+    function toggleMenu() {
+
+        if (mobileMenu.classList.contains("active")) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+
+    }
+
+
+    menuButton.addEventListener("click", toggleMenu);
+
+
+    /* =========================
+       LINKS DO MENU
+    ========================== */
+
+    const mobileLinks = mobileMenu.querySelectorAll("a");
+
+    mobileLinks.forEach(link => {
+
+        link.addEventListener("click", () => {
+            closeMenu();
+        });
+
+    });
+
+
+    /* =========================
+       ESC FECHA MENU
+    ========================== */
+
+    document.addEventListener("keydown", event => {
+
+        if (event.key === "Escape") {
+            closeMenu();
+        }
+
+    });
+
+
+    /* =========================
+       CLIQUE FORA
+    ========================== */
+
+    mobileMenu.addEventListener("click", event => {
+
+        if (event.target === mobileMenu) {
+            closeMenu();
+        }
+
+    });
+
+
+    /* =========================
+       SCROLL SUAVE
+    ========================== */
+
+    const internalLinks = document.querySelectorAll(
+        'a[href^="#"]'
+    );
+
+
+    internalLinks.forEach(link => {
+
+        link.addEventListener("click", event => {
+
+            const targetId = link.getAttribute("href");
+
+            if (!targetId || targetId === "#") {
+                return;
+            }
+
+            const target = document.querySelector(targetId);
+
+            if (!target) {
+                return;
+            }
+
+            event.preventDefault();
+
+            target.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+        });
+
+    });
+
+
+    /* =========================
+       GALERIA
+    ========================== */
+
+    let currentIndex = 0;
+
+    let autoplay;
+
+
+    function showSlide(index) {
+
+        if (!gallerySlides.length) {
+            return;
+        }
+
+
+        if (index >= gallerySlides.length) {
+            currentIndex = 0;
+        }
+
+        else if (index < 0) {
+            currentIndex = gallerySlides.length - 1;
+        }
+
+        else {
+            currentIndex = index;
+        }
+
+
+        gallerySlides.forEach((slide, index) => {
+
+            slide.classList.toggle(
+                "active",
+                index === currentIndex
+            );
+
+        });
+
+
+        galleryDots.forEach((dot, index) => {
+
+            dot.classList.toggle(
+                "active",
+                index === currentIndex
+            );
+
+        });
+
+
+        if (currentSlide) {
+
+            currentSlide.textContent =
+                String(currentIndex + 1).padStart(2, "0");
+
+        }
+
+    }
+
+
+    function nextSlide() {
+        showSlide(currentIndex + 1);
+    }
+
+
+    function previousSlide() {
+        showSlide(currentIndex - 1);
+    }
+
+
+    if (nextButton) {
+
+        nextButton.addEventListener(
+            "click",
+            nextSlide
+        );
+
+    }
+
+
+    if (prevButton) {
+
+        prevButton.addEventListener(
+            "click",
+            previousSlide
+        );
+
+    }
+
+
+    galleryDots.forEach(dot => {
+
+        dot.addEventListener("click", () => {
+
+            const slideIndex =
+                Number(dot.dataset.slide);
+
+            showSlide(slideIndex);
+
+            restartAutoplay();
+
+        });
+
+    });
+
+
+    /* =========================
+       AUTOPLAY
+    ========================== */
+
+    function startAutoplay() {
+
+        autoplay = setInterval(() => {
+
+            nextSlide();
+
+        }, 5000);
+
+    }
+
+
+    function stopAutoplay() {
+
+        clearInterval(autoplay);
+
+    }
+
+
+    function restartAutoplay() {
+
+        stopAutoplay();
+        startAutoplay();
+
+    }
+
+
+    const gallery = document.querySelector(".gallery");
+
+
+    if (gallery) {
+
+        gallery.addEventListener(
+            "mouseenter",
+            stopAutoplay
+        );
+
+        gallery.addEventListener(
+            "mouseleave",
+            startAutoplay
+        );
+
+        gallery.addEventListener(
+            "focusin",
+            stopAutoplay
+        );
+
+        gallery.addEventListener(
+            "focusout",
+            startAutoplay
+        );
+
+    }
+
+
+    /* =========================
+       TECLADO DA GALERIA
+    ========================== */
+
+    document.addEventListener("keydown", event => {
+
+        if (event.key === "ArrowRight") {
+
+            nextSlide();
+            restartAutoplay();
+
+        }
+
+        if (event.key === "ArrowLeft") {
+
+            previousSlide();
+            restartAutoplay();
+
+        }
+
+    });
+
+
+    /* =========================
+       SWIPE NO CELULAR
+    ========================== */
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+
+    if (gallery) {
+
+        gallery.addEventListener(
+            "touchstart",
+            event => {
+
+                touchStartX =
+                    event.changedTouches[0].screenX;
+
+            },
+            { passive: true }
+        );
+
+
+        gallery.addEventListener(
+            "touchend",
+            event => {
+
+                touchEndX =
+                    event.changedTouches[0].screenX;
+
+                handleSwipe();
+
+            },
+            { passive: true }
+        );
+
+    }
+
+
+    function handleSwipe() {
+
+        const difference =
+            touchStartX - touchEndX;
+
+
+        if (Math.abs(difference) < 50) {
+            return;
+        }
+
+
+        if (difference > 0) {
+            nextSlide();
+        } else {
+            previousSlide();
+        }
+
+
+        restartAutoplay();
+
+    }
+
+
+    /* =========================
+       REVEAL AO ROLAR
+    ========================== */
+
+    const revealElements =
+        document.querySelectorAll(".reveal");
+
+
+    const revealObserver =
+        new IntersectionObserver(
+            entries => {
+
+                entries.forEach(entry => {
+
+                    if (entry.isIntersecting) {
+
+                        entry.target.classList.add(
+                            "visible"
+                        );
+
+                        revealObserver.unobserve(
+                            entry.target
+                        );
+
+                    }
+
+                });
+
+            },
+            {
+                threshold: 0.12
+            }
+        );
+
+
+    revealElements.forEach(element => {
+
+        revealObserver.observe(element);
+
+    });
+
+
+    /* =========================
+       IMAGENS DA GALERIA
+    ========================== */
+
+    const photoNames = [
+        "barbearia-01.jpg",
+        "barbearia-02.jpg",
+        "barbearia-03.jpg",
+        "barbearia-04.jpg",
+        "barbearia-05.jpg"
+    ];
+
+
+    gallerySlides.forEach((slide, index) => {
+
+        const placeholder =
+            slide.querySelector(".photo-placeholder");
+
+
+        if (!placeholder) {
+            return;
+        }
+
+
+        const image =
+            new Image();
+
+
+        image.src =
+            `fotos/${photoNames[index]}`;
+
+
+        image.onload = () => {
+
+            slide.style.backgroundImage =
+                `url("fotos/${photoNames[index]}")`;
+
+            slide.style.backgroundSize = "cover";
+            slide.style.backgroundPosition = "center";
+
+
+            placeholder.style.opacity = "0";
+
+        };
+
+
+        image.onerror = () => {
+
+            placeholder.style.opacity = "1";
+
+        };
+
+    });
+
+
+    /* =========================
+       INICIAR GALERIA
+    ========================== */
+
+    showSlide(0);
+
+    startAutoplay();
+
+});
